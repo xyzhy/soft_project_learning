@@ -1,0 +1,76 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper
+PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+"http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.remember.mapper.VocabularyMapper">
+    
+    <resultMap type="Vocabulary" id="VocabularyResult">
+        <result property="vocabularyId"    column="vocabulary_id"    />
+        <result property="word_book_id"    column="wordBookId"    />
+        <result property="english"    column="english"    />
+        <result property="means"    column="means"    />
+        <result property="createDate"    column="create_date"    />
+        <result property="updateDate"    column="update_date"    />
+    </resultMap>
+
+    <sql id="selectVocabularyVo">
+        select v.vocabulary_id, btv.word_book_id, v.english, v.means, v.create_date, v.update_date
+        from book_to_vocabulary as btv left join vocabulary as v on btv.vocabulary_id = v.vocabulary_id
+    </sql>
+
+    <select id="selectVocabularyList" parameterType="Vocabulary" resultMap="VocabularyResult">
+        <include refid="selectVocabularyVo"/>
+        <where>
+            <if test="wordBookId != null  and wordBookId != ''"> and btv.word_book_id = #{wordBookId}</if>
+            <if test="english != null  and english != ''"> and v.english like concat('%', #{english}, '%')</if>
+            <if test="means != null  and means != ''"> and v.means like concat('%', #{means}, '%')</if>
+            <if test="params.beginCreateDate != null and params.beginCreateDate != '' and params.endCreateDate != null and params.endCreateDate != ''"> and create_date between #{params.beginCreateDate} and #{params.endCreateDate}</if>
+            <if test="params.beginUpdateDate != null and params.beginUpdateDate != '' and params.endUpdateDate != null and params.endUpdateDate != ''"> and update_date between #{params.beginUpdateDate} and #{params.endUpdateDate}</if>
+        </where>
+    </select>
+    
+    <select id="selectVocabularyByVocabularyId" parameterType="String" resultMap="VocabularyResult">
+        <include refid="selectVocabularyVo"/>
+        where v.vocabulary_id = #{vocabularyId}
+    </select>
+
+    <insert id="insertVocabulary" parameterType="Vocabulary">
+        insert into vocabulary
+        <trim prefix="(" suffix=")" suffixOverrides=",">
+            <if test="vocabularyId != null">vocabulary_id,</if>
+            <if test="english != null and english != ''">english,</if>
+            <if test="means != null and means != ''">means,</if>
+            <if test="createDate != null">create_date,</if>
+            <if test="updateDate != null">update_date,</if>
+         </trim>
+        <trim prefix="values (" suffix=")" suffixOverrides=",">
+            <if test="vocabularyId != null">#{vocabularyId},</if>
+            <if test="english != null and english != ''">#{english},</if>
+            <if test="means != null and chinese != ''">#{means},</if>
+            <if test="createDate != null">#{createDate},</if>
+            <if test="updateDate != null">#{updateDate},</if>
+         </trim>
+    </insert>
+
+    <update id="updateVocabulary" parameterType="Vocabulary">
+        update vocabulary
+        <trim prefix="SET" suffixOverrides=",">
+            <if test="english != null and english != ''">english = #{english},</if>
+            <if test="means != null and means != ''">means = #{means},</if>
+            <if test="createDate != null">create_date = #{createDate},</if>
+            <if test="updateDate != null">update_date = #{updateDate},</if>
+        </trim>
+        where vocabulary_id = #{vocabularyId}
+    </update>
+
+    <delete id="deleteVocabularyByVocabularyId" parameterType="String">
+        delete from vocabulary where vocabulary_id = #{vocabularyId}
+    </delete>
+
+    <delete id="deleteVocabularyByVocabularyIds" parameterType="String">
+        delete from vocabulary where vocabulary_id in 
+        <foreach item="vocabularyId" collection="array" open="(" separator="," close=")">
+            #{vocabularyId}
+        </foreach>
+    </delete>
+</mapper>

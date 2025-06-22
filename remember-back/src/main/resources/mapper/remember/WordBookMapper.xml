@@ -1,0 +1,78 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper
+PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+"http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.remember.mapper.WordBookMapper">
+    
+    <resultMap type="WordBook" id="WordBookResult">
+        <result property="wordBookId"    column="word_book_id"    />
+        <result property="wordBookName"    column="word_book_name"    />
+        <result property="wordNums"    column="word_nums"    />
+        <result property="superPersonnel"    column="super_personnel"    />
+        <result property="updateDate"    column="update_date"    />
+        <result property="createDate"    column="create_date"    />
+    </resultMap>
+
+    <sql id="selectWordBookVo">
+        select word_book_id, word_book_name, word_nums, super_personnel, update_date, create_date from word_book
+    </sql>
+
+    <select id="selectWordBookList" parameterType="WordBook" resultMap="WordBookResult">
+        <include refid="selectWordBookVo"/>
+        <where>  
+            <if test="wordBookName != null  and wordBookName != ''"> and word_book_name like concat('%', #{wordBookName}, '%')</if>
+            <if test="params.beginWordNums != null and params.beginWordNums != '' and params.endWordNums != null and params.endWordNums != ''"> and word_nums between #{params.beginWordNums} and #{params.endWordNums}</if>
+            <if test="superPersonnel != null  and superPersonnel != ''"> and super_personnel like concat('%', #{superPersonnel}, '%')</if>
+            <if test="params.beginUpdateDate != null and params.beginUpdateDate != '' and params.endUpdateDate != null and params.endUpdateDate != ''"> and update_date between #{params.beginUpdateDate} and #{params.endUpdateDate}</if>
+            <if test="params.beginCreateDate != null and params.beginCreateDate != '' and params.endCreateDate != null and params.endCreateDate != ''"> and create_date between #{params.beginCreateDate} and #{params.endCreateDate}</if>
+        </where>
+    </select>
+    
+    <select id="selectWordBookByWordBookId" parameterType="String" resultMap="WordBookResult">
+        <include refid="selectWordBookVo"/>
+        where word_book_id = #{wordBookId}
+    </select>
+
+    <insert id="insertWordBook" parameterType="WordBook">
+        insert into word_book
+        <trim prefix="(" suffix=")" suffixOverrides=",">
+            <if test="wordBookId != null">word_book_id,</if>
+            <if test="wordBookName != null and wordBookName != ''">word_book_name,</if>
+            <if test="wordNums != null">word_nums,</if>
+            <if test="superPersonnel != null">super_personnel,</if>
+            <if test="updateDate != null">update_date,</if>
+            <if test="createDate != null">create_date,</if>
+         </trim>
+        <trim prefix="values (" suffix=")" suffixOverrides=",">
+            <if test="wordBookId != null">#{wordBookId},</if>
+            <if test="wordBookName != null and wordBookName != ''">#{wordBookName},</if>
+            <if test="wordNums != null">#{wordNums},</if>
+            <if test="superPersonnel != null">#{superPersonnel},</if>
+            <if test="updateDate != null">#{updateDate},</if>
+            <if test="createDate != null">#{createDate},</if>
+         </trim>
+    </insert>
+
+    <update id="updateWordBook" parameterType="WordBook">
+        update word_book
+        <trim prefix="SET" suffixOverrides=",">
+            <if test="wordBookName != null and wordBookName != ''">word_book_name = #{wordBookName},</if>
+            <if test="wordNums != null">word_nums = #{wordNums},</if>
+            <if test="superPersonnel != null">super_personnel = #{superPersonnel},</if>
+            <if test="updateDate != null">update_date = #{updateDate},</if>
+            <if test="createDate != null">create_date = #{createDate},</if>
+        </trim>
+        where word_book_id = #{wordBookId}
+    </update>
+
+    <delete id="deleteWordBookByWordBookId" parameterType="String">
+        delete from word_book where word_book_id = #{wordBookId}
+    </delete>
+
+    <delete id="deleteWordBookByWordBookIds" parameterType="String">
+        delete from word_book where word_book_id in 
+        <foreach item="wordBookId" collection="array" open="(" separator="," close=")">
+            #{wordBookId}
+        </foreach>
+    </delete>
+</mapper>

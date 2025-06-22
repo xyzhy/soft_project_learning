@@ -1,0 +1,63 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper
+        PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+        "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.ruoyi.system.mapper.BookToVocabularyMapper">
+
+    <resultMap type="BookToVocabulary" id="BookToVocabularyResult">
+        <result property="bookToVocabularyId"    column="book_to_vocabulary_id"    />
+        <result property="wordBookId"    column="word_book_id"    />
+        <result property="vocabularyId"    column="vocabulary_id"    />
+    </resultMap>
+
+    <sql id="selectBookToVocabularyVo">
+        select book_to_vocabulary_id, word_book_id, vocabulary_id from book_to_vocabulary
+    </sql>
+
+    <select id="selectBookToVocabularyList" parameterType="BookToVocabulary" resultMap="BookToVocabularyResult">
+        <include refid="selectBookToVocabularyVo"/>
+        <where>
+            <if test="wordBookId != null  and wordBookId != ''"> and word_book_id = #{wordBookId}</if>
+            <if test="vocabularyId != null  and vocabularyId != ''"> and vocabulary_id = #{vocabularyId}</if>
+        </where>
+    </select>
+
+    <select id="selectBookToVocabularyByBookToVocabularyId" parameterType="String" resultMap="BookToVocabularyResult">
+        <include refid="selectBookToVocabularyVo"/>
+        where book_to_vocabulary_id = #{bookToVocabularyId}
+    </select>
+
+    <insert id="insertBookToVocabulary" parameterType="BookToVocabulary">
+        insert into book_to_vocabulary
+        <trim prefix="(" suffix=")" suffixOverrides=",">
+            <if test="bookToVocabularyId != null">book_to_vocabulary_id,</if>
+            <if test="wordBookId != null and wordBookId != ''">word_book_id,</if>
+            <if test="vocabularyId != null and vocabularyId != ''">vocabulary_id,</if>
+        </trim>
+        <trim prefix="values (" suffix=")" suffixOverrides=",">
+            <if test="bookToVocabularyId != null">#{bookToVocabularyId},</if>
+            <if test="wordBookId != null and wordBookId != ''">#{wordBookId},</if>
+            <if test="vocabularyId != null and vocabularyId != ''">#{vocabularyId},</if>
+        </trim>
+    </insert>
+
+    <update id="updateBookToVocabulary" parameterType="BookToVocabulary">
+        update book_to_vocabulary
+        <trim prefix="SET" suffixOverrides=",">
+            <if test="wordBookId != null and wordBookId != ''">word_book_id = #{wordBookId},</if>
+            <if test="vocabularyId != null and vocabularyId != ''">vocabulary_id = #{vocabularyId},</if>
+        </trim>
+        where book_to_vocabulary_id = #{bookToVocabularyId}
+    </update>
+
+    <delete id="deleteBookToVocabularyByBookToVocabularyId" parameterType="String">
+        delete from book_to_vocabulary where book_to_vocabulary_id = #{bookToVocabularyId}
+    </delete>
+
+    <delete id="deleteBookToVocabularyByBookToVocabularyIds" parameterType="String">
+        delete from book_to_vocabulary where book_to_vocabulary_id in
+        <foreach item="bookToVocabularyId" collection="array" open="(" separator="," close=")">
+            #{bookToVocabularyId}
+        </foreach>
+    </delete>
+</mapper>
