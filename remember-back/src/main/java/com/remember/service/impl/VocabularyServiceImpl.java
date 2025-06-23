@@ -5,14 +5,11 @@ import java.util.*;
 import com.ruoyi.common.annotation.DateOperation;
 import com.ruoyi.common.exception.attribute.NullAttributeException;
 import com.ruoyi.common.utils.StringUtils;
-import org.apache.commons.lang3.ObjectUtils;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import com.remember.mapper.VocabularyMapper;
 import com.remember.domain.Vocabulary;
 import com.remember.service.IVocabularyService;
+import org.springframework.transaction.annotation.Transactional;
 
 /**
  * 词汇Service业务层处理
@@ -23,9 +20,11 @@ import com.remember.service.IVocabularyService;
 @Service
 public class VocabularyServiceImpl implements IVocabularyService 
 {
-    private static final Logger log = LoggerFactory.getLogger(VocabularyServiceImpl.class);
-    @Autowired
-    private VocabularyMapper vocabularyMapper;
+    private final VocabularyMapper vocabularyMapper;
+
+    public VocabularyServiceImpl(VocabularyMapper vocabularyMapper) {
+        this.vocabularyMapper = vocabularyMapper;
+    }
 
     /**
      * 查询词汇
@@ -69,6 +68,57 @@ public class VocabularyServiceImpl implements IVocabularyService
         }
         return temp.toArray(new String[][]{});
     }
+
+    /**
+     * 从方法用来合并两个词汇的词义
+     * @param newMeans 可能蕴含新的词义的词汇
+     * @param oldMeans 原来的词义
+     * @return 合并之后的词义
+     */
+    private String extraMeans(Vocabulary newMeans, Vocabulary oldMeans) {
+        Map<String, String> map = new HashMap<>();
+        // 新意思
+        String[][] new_pos_means = getPosMeans(newMeans);
+        for (String[] newPosMean : new_pos_means) {
+            map.put(newPosMean[0], newPosMean[1]);
+        }
+        // 旧意思
+        String[][] old_pos_means = getPosMeans(oldMeans);
+        for (String[] oldPosMean : old_pos_means) {
+            String oldMean = map.get(oldPosMean[0]);
+            if (StringUtils.isEmpty(oldMean)) {
+                map.put(oldPosMean[0], oldPosMean[1]);
+            }
+
+            StringBuilder means = new StringBuilder();
+            // 去重
+            Set<String> set = new HashSet<>();
+            set.addAll(Arrays.asList(oldMean.split(",")));
+            set.addAll(Arrays.asList(oldPosMean[1].split(",")));
+            // 合并
+            String[] joinAfterMeans = set.toArray(new String[]{});
+            for (int i = 0; i < joinAfterMeans.length; i++) {
+                means.append(joinAfterMeans[i]);
+                if (i+1 < joinAfterMeans.length) {
+                    means.append(",");
+                }
+            }
+            map.put(oldPosMean[0], means.toString());
+        }
+
+        // 合并之后的意思
+        StringBuilder means = new StringBuilder();
+        for (Map.Entry<String, String> stringStringEntry : map.entrySet()) {
+            means
+                    .append(stringStringEntry.getKey())
+                    .append(":")
+                    .append(stringStringEntry.getValue())
+                    .append(";");
+
+        }
+        return means.toString();
+    }
+
     /**
      * 批量插入词汇
      * 如果词汇书中已经存在词汇则进行更新操作
@@ -79,72 +129,21 @@ public class VocabularyServiceImpl implements IVocabularyService
     public int insertBatchVocabulary(List<Vocabulary> vocabularies) {
         System.out.println(vocabularies);
         int success_numeric = 0;
-        List<Vocabulary> waitUpdateVocab = new ArrayList<>();
-        List<Vocabulary> waitInsertVocab = new ArrayList<>();
-        waitInsertVocab.addAll(vocabularies);
-
-        // 词汇书中拥有的词汇
-        Vocabulary select = new Vocabulary();
-        select.setWordBookId(vocabularies.get(0).getWordBookId());
-        List<Vocabulary> wordOwnVocab = selectVocabularyList(select);
+        // 更具上传的词汇寻找以及存在的词汇
+        List<Vocabulary> waitUpdateVocab = vocabularyMapper.selectVocabularyListByEnglish(vocabularies, vocabularies.get(0).getWordBookId());
 
         // 检查是否拥有这些词
-        for (Vocabulary vocabulary : vocabularies) {
-            // 合并词性和词义
-            for (Vocabulary word : wordOwnVocab) {
-                if (word.equals(vocabulary)) {
-                    // 检查其用用这些词则将其从插入词中移除, 并移入修改词
-                    waitInsertVocab.remove(vocabulary);
-                    // 新意思
-                    String[][] new_pos_means = getPosMeans(vocabulary);
-                    // 旧意思
-                    String[][] old_pos_means = getPosMeans(word);
-                    // 合并之后的意思
-                    StringBuffer means = new StringBuffer();
+        for (Vocabulary oldMeans : waitUpdateVocab) {
+            int ownIndex = vocabularies.indexOf(oldMeans);
+            Vocabulary newMeans = vocabularies.remove(ownIndex);
 
-                    for (String[] newPosMean : new_pos_means) {
-                        boolean flag = false;
-                        for (String[] oldPosMean : old_pos_means) {
-                            // 词性相同, 现在校验中文意思然后去重合并
-                            if (StringUtils.equals(newPosMean[0], oldPosMean[0])) {
-                                // 去重
-                                Set<String> set = new HashSet<>();
-                                set.addAll(Arrays.asList(newPosMean[1].split(",")));
-                                set.addAll(Arrays.asList(oldPosMean[1].split(",")));
-                                // 合并
-                                String[] joinAfterMeans = set.toArray(new String[]{});
-                                means
-                                        .append(newPosMean[0])
-                                        .append(":");
-                                for (int i = 0; i < joinAfterMeans.length; i++) {
-                                    means.append(joinAfterMeans[i]);
-                                    if (i+1 < joinAfterMeans.length) {
-                                        means.append(",");
-                                    }
-                                }
-                                means.append(";");
-                                flag = true;
-                            }
-                        }
-                        if (!flag) {
-                            means
-                                    .append(newPosMean[0])
-                                    .append(":")
-                                    .append(newPosMean[1])
-                                    .append(";");
-                        }
-                    }
-                    word.setMeans(means.toString());
-                    waitUpdateVocab.add(word);
-                }
-            }
+            // 合并词性和词义
+            oldMeans.setMeans(extraMeans(newMeans, oldMeans));
         }
 
-        System.out.println(waitInsertVocab);
-        System.out.println(waitUpdateVocab);
         // 批量插入和批量更新
-        if (!waitInsertVocab.isEmpty()) {
-            success_numeric += vocabularyMapper.insertBatchVocabulary(waitInsertVocab);
+        if (!vocabularies.isEmpty()) {
+            success_numeric += vocabularyMapper.insertBatchVocabulary(vocabularies);
         }
         if (!waitUpdateVocab.isEmpty()) {
             success_numeric += vocabularyMapper.updateBatchVocabulary(waitUpdateVocab);
@@ -172,10 +171,24 @@ public class VocabularyServiceImpl implements IVocabularyService
      */
     @Override
     @DateOperation
+    @Transactional
     public int updateVocabulary(Vocabulary vocabulary)
     {
-        // todo 更新, 如果是更新单词, 则将单词从原来的词汇中删除, 再检查是否拥有此单词, 如果有就更新词性词义, 如果没有就直接重新插入
-        return vocabularyMapper.updateVocabulary(vocabulary);
+        // 更新, 如果是更新单词, 则将单词从原来的词汇中删除, 再检查是否拥有此单词, 如果有就更新词性词义, 如果没有就直接重新插入
+        Vocabulary origin = vocabularyMapper.selectVocabularyByVocabularyId(vocabulary.getVocabularyId());
+        Vocabulary mayEexistOrigin = vocabularyMapper.selectVocabularyByEnglish(vocabulary);
+        // 如果是更新的是单词, 并且其中没有单词的话, 那么就直接原地更新就行了或者只是更新词义的话, 也可以原地更新
+        if (mayEexistOrigin == null || StringUtils.equals(origin.getEnglish(), vocabulary.getEnglish())) {
+            return vocabularyMapper.updateVocabulary(vocabulary);
+        }
+
+        // 如果原先拥有这个单词, 那么合并词性和词义, 并删除原先的单词
+        int remove = vocabularyMapper.deleteVocabularyByVocabularyId(vocabulary.getVocabularyId());
+        if (remove == 0) {
+            throw new RuntimeException("更新操作失败: 删除原先词出现了未知错误");
+        }
+        mayEexistOrigin.setMeans(extraMeans(vocabulary, mayEexistOrigin));
+        return vocabularyMapper.updateVocabulary(mayEexistOrigin);
     }
 
     /**

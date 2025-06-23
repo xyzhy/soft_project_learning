@@ -2,6 +2,7 @@ package com.remember.mapper;
 
 import java.util.List;
 import com.remember.domain.Vocabulary;
+import org.apache.ibatis.annotations.Param;
 
 /**
  * 这是词, 和词汇做链接Mapper接口
@@ -11,12 +12,26 @@ import com.remember.domain.Vocabulary;
  */
 public interface VocabularyMapper 
 {
+
+    /**
+     * 检查词汇中是否拥有这个单词
+     * @param vocabulary 词汇
+     * @return null或者是这个单词
+     */
+    Vocabulary selectVocabularyByEnglish(Vocabulary vocabulary);
+    /**
+     * 根据词汇书中的单词以查询词汇
+     * @param list 词汇
+     * @param wordBookId 词汇书
+     * @return 词汇中拥有这些词汇
+     */
+    List<Vocabulary> selectVocabularyListByEnglish(@Param("list") List<Vocabulary> list, @Param("wordBookId") String wordBookId);
     /**
      * 批量插入词汇
      * @param list 等待插入的词汇
      * @return 操作成功的条数
      */
-    public int insertBatchVocabulary(List<Vocabulary> list);
+    int insertBatchVocabulary(List<Vocabulary> list);
 
     /**
      * 批量修改词汇
@@ -24,14 +39,14 @@ public interface VocabularyMapper
      * @return 操作成功的条数
      */
 
-    public int updateBatchVocabulary(List<Vocabulary> list);
+    int updateBatchVocabulary(List<Vocabulary> list);
     /**
      * 查询这是词, 和词汇做链接
      * 
      * @param vocabularyId 这是词, 和词汇做链接主键
      * @return 这是词, 和词汇做链接
      */
-    public Vocabulary selectVocabularyByVocabularyId(String vocabularyId);
+    Vocabulary selectVocabularyByVocabularyId(String vocabularyId);
 
     /**
      * 查询这是词, 和词汇做链接列表
@@ -39,7 +54,7 @@ public interface VocabularyMapper
      * @param vocabulary 这是词, 和词汇做链接
      * @return 这是词, 和词汇做链接集合
      */
-    public List<Vocabulary> selectVocabularyList(Vocabulary vocabulary);
+    List<Vocabulary> selectVocabularyList(Vocabulary vocabulary);
 
     /**
      * 新增这是词, 和词汇做链接
@@ -47,7 +62,7 @@ public interface VocabularyMapper
      * @param vocabulary 这是词, 和词汇做链接
      * @return 结果
      */
-    public int insertVocabulary(Vocabulary vocabulary);
+    int insertVocabulary(Vocabulary vocabulary);
 
     /**
      * 修改这是词, 和词汇做链接
@@ -55,7 +70,7 @@ public interface VocabularyMapper
      * @param vocabulary 这是词, 和词汇做链接
      * @return 结果
      */
-    public int updateVocabulary(Vocabulary vocabulary);
+    int updateVocabulary(Vocabulary vocabulary);
 
     /**
      * 删除这是词, 和词汇做链接
@@ -63,7 +78,7 @@ public interface VocabularyMapper
      * @param vocabularyId 这是词, 和词汇做链接主键
      * @return 结果
      */
-    public int deleteVocabularyByVocabularyId(String vocabularyId);
+    int deleteVocabularyByVocabularyId(String vocabularyId);
 
     /**
      * 批量删除这是词, 和词汇做链接
@@ -71,5 +86,5 @@ public interface VocabularyMapper
      * @param vocabularyIds 需要删除的数据主键集合
      * @return 结果
      */
-    public int deleteVocabularyByVocabularyIds(String[] vocabularyIds);
+    int deleteVocabularyByVocabularyIds(String[] vocabularyIds);
 }
