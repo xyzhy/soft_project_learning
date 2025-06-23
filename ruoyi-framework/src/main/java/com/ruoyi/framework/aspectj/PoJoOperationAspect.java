@@ -2,7 +2,6 @@ package com.ruoyi.framework.aspectj;
 
 import com.ruoyi.common.annotation.GenerateId;
 import com.ruoyi.common.annotation.SelfDefineException;
-import lombok.SneakyThrows;
 import org.aspectj.lang.JoinPoint;
 import org.aspectj.lang.annotation.Aspect;
 import org.aspectj.lang.annotation.Before;
@@ -13,10 +12,8 @@ import org.springframework.stereotype.Component;
 
 import java.lang.reflect.Field;
 import java.lang.reflect.InvocationTargetException;
-import java.util.ArrayList;
 import java.util.Date;
 import java.util.List;
-import java.util.function.Consumer;
 
 /**
  * 此切面主要应用于PoJo类的切面
@@ -52,6 +49,7 @@ public class PoJoOperationAspect {
      * @param arg 等待添加的对象
      */
     private void addGenerateDate(Object arg) throws NoSuchFieldException, IllegalAccessException {
+        logger.warn("进入添加时间切面");
         Field updateDate = arg.getClass().getDeclaredField("updateDate");
         Field createDate = arg.getClass().getDeclaredField("createDate");
 
@@ -70,6 +68,7 @@ public class PoJoOperationAspect {
      * @param arg 等待添加的对象
      */
     private void addGenerateId(Object arg) throws InvocationTargetException, IllegalAccessException {
+        logger.warn("进入添加Id切面");
         for (Field field : arg.getClass().getDeclaredFields()) {
             GenerateId annotation = field.getAnnotation(GenerateId.class);
             if (annotation == null) {
@@ -85,9 +84,6 @@ public class PoJoOperationAspect {
      * 执行中间件
      * @param joinPoint 操作的点对象
      * @param function 执行的方法
-     * @throws NoSuchFieldException
-     * @throws InvocationTargetException
-     * @throws IllegalAccessException
      */
     private void moderExecution(JoinPoint joinPoint, SelfDefineException<Object> function) throws Exception {
         for (Object arg : joinPoint.getArgs()) {
@@ -106,7 +102,7 @@ public class PoJoOperationAspect {
     /**
      * 填充id的注解, 需要搭配 WaitFillId 和 GenerateId 注解使用
      * 或者是规范的命名
-     * @param joinPoint
+     * @param joinPoint 切入点对象
      */
     @Before("generateIdPointcutOne() || generateIdPointcutTwo()")
     public void generate_id(JoinPoint joinPoint) throws Exception {
@@ -115,7 +111,7 @@ public class PoJoOperationAspect {
 
     /**
      * 填充时间的注解, 插入的时候也需要添加
-     * @param joinPoint
+     * @param joinPoint 切入点对象
      */
     @Before("addDatePointcutOne() || addDatePointcutTwo() || generateIdPointcutOne() || generateIdPointcutTwo()")
     public void fill_date(JoinPoint joinPoint) throws Exception {
