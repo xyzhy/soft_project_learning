@@ -89,9 +89,6 @@
         >导出</el-button>
       </el-col>
       <el-col :span="1.5">
-        <el-button plain class="button" @click="down_template">模板下载</el-button>
-      </el-col>
-      <el-col :span="1.5">
         <el-upload
           class="upload-demo"
           action="#"
@@ -100,8 +97,14 @@
           accept=".xlsx, .xls"
           :on-change="handleProgress"
           :show-file-list="false">
-          <el-button size="small" type="primary">点击上传</el-button>
+          <el-button size="mini" type="primary">点击上传</el-button>
         </el-upload>
+      </el-col>
+      <el-col :span="14">
+        <el-button size="mini" type="text" @click="backToWordBook">退出词汇书</el-button>
+      </el-col>
+      <el-col :span="1.5">
+        <el-button plain size="mini" class="button" @click="down_template">模板下载</el-button>
       </el-col>
       <right-toolbar :showSearch.sync="showSearch" @queryTable="getList"></right-toolbar>
     </el-row>
@@ -173,6 +176,8 @@ export default {
   name: "Vocabulary",
   data() {
     return {
+      // 选中的单词
+      seletedWords: [],
       // 遮罩层
       loading: true,
       // 选中数组
@@ -226,6 +231,10 @@ export default {
     this.getList()
   },
   methods: {
+    /** 退回到选择词汇书的页面 */
+    backToWordBook() {
+      location.href = "/remember/word/book"
+    },
     /** 上传文件添加词汇 */
     handleProgress(file) {
       let formData = new FormData()
@@ -239,12 +248,6 @@ export default {
           type: "success"
         })
         this.getList()
-      })
-      .catch(err => {
-        this.$message({
-          message: res.msg,
-          type: "error"
-        })
       })
     },
     /** 下载模板 */
@@ -302,6 +305,7 @@ export default {
     // 多选框选中数据
     handleSelectionChange(selection) {
       this.ids = selection.map(item => item.vocabularyId)
+      this.selectedWords = selection.map(item => item.english)
       this.single = selection.length!==1
       this.multiple = !selection.length
     },
@@ -344,7 +348,8 @@ export default {
     /** 删除按钮操作 */
     handleDelete(row) {
       const vocabularyIds = row.vocabularyId || this.ids
-      this.$modal.confirm('是否确认删除这是词, 和词汇做链接编号为"' + vocabularyIds + '"的数据项？').then(function() {
+      const tips = row.english || this.selectedWords
+      this.$modal.confirm('是否确认删除"' + tips + '"?').then(function() {
         return delVocabulary(vocabularyIds)
       }).then(() => {
         this.getList()

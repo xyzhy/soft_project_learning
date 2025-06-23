@@ -3,7 +3,6 @@ package com.remember.controller;
 import java.util.List;
 import javax.servlet.http.HttpServletResponse;
 import org.springframework.security.access.prepost.PreAuthorize;
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.PutMapping;
@@ -31,8 +30,11 @@ import com.ruoyi.common.core.page.TableDataInfo;
 @RequestMapping("/remember/wordBook")
 public class WordBookController extends BaseController
 {
-    @Autowired
-    private IWordBookService wordBookService;
+    private final IWordBookService wordBookService;
+
+    public WordBookController(IWordBookService wordBookService) {
+        this.wordBookService = wordBookService;
+    }
 
     /**
      * 查询词汇书列表
@@ -55,7 +57,7 @@ public class WordBookController extends BaseController
     public void export(HttpServletResponse response, WordBook wordBook)
     {
         List<WordBook> list = wordBookService.selectWordBookList(wordBook);
-        ExcelUtil<WordBook> util = new ExcelUtil<WordBook>(WordBook.class);
+        ExcelUtil<WordBook> util = new ExcelUtil<>(WordBook.class);
         util.exportExcel(response, list, "词汇书数据");
     }
 

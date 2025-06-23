@@ -4,7 +4,7 @@ PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
 "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
 <mapper namespace="com.remember.mapper.WordBookMapper">
     
-    <resultMap type="WordBook" id="WordBookResult">
+    <resultMap type="com.remember.domain.WordBook" id="WordBookResult">
         <result property="wordBookId"    column="word_book_id"    />
         <result property="wordBookName"    column="word_book_name"    />
         <result property="wordNums"    column="word_nums"    />
@@ -14,10 +14,12 @@ PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
     </resultMap>
 
     <sql id="selectWordBookVo">
-        select word_book_id, word_book_name, word_nums, super_personnel, update_date, create_date from word_book
+        select
+            wb.word_book_id, wb.word_book_name, count(v.vocabulary_id) as word_nums, wb.super_personnel, wb.update_date, wb.create_date
+        from word_book as wb join remeber_english.vocabulary v on wb.word_book_id = v.word_book_id
     </sql>
 
-    <select id="selectWordBookList" parameterType="WordBook" resultMap="WordBookResult">
+    <select id="selectWordBookList" parameterType="com.remember.domain.WordBook" resultMap="WordBookResult">
         <include refid="selectWordBookVo"/>
         <where>  
             <if test="wordBookName != null  and wordBookName != ''"> and word_book_name like concat('%', #{wordBookName}, '%')</if>
@@ -26,14 +28,16 @@ PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
             <if test="params.beginUpdateDate != null and params.beginUpdateDate != '' and params.endUpdateDate != null and params.endUpdateDate != ''"> and update_date between #{params.beginUpdateDate} and #{params.endUpdateDate}</if>
             <if test="params.beginCreateDate != null and params.beginCreateDate != '' and params.endCreateDate != null and params.endCreateDate != ''"> and create_date between #{params.beginCreateDate} and #{params.endCreateDate}</if>
         </where>
+        group by wb.word_book_id
     </select>
     
     <select id="selectWordBookByWordBookId" parameterType="String" resultMap="WordBookResult">
         <include refid="selectWordBookVo"/>
-        where word_book_id = #{wordBookId}
+        where wb.word_book_id = #{wordBookId}
+        group by wb.word_book_id
     </select>
 
-    <insert id="insertWordBook" parameterType="WordBook">
+    <insert id="insertWordBook" parameterType="com.remember.domain.WordBook">
         insert into word_book
         <trim prefix="(" suffix=")" suffixOverrides=",">
             <if test="wordBookId != null">word_book_id,</if>
@@ -53,7 +57,7 @@ PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
          </trim>
     </insert>
 
-    <update id="updateWordBook" parameterType="WordBook">
+    <update id="updateWordBook" parameterType="com.remember.domain.WordBook">
         update word_book
         <trim prefix="SET" suffixOverrides=",">
             <if test="wordBookName != null and wordBookName != ''">word_book_name = #{wordBookName},</if>

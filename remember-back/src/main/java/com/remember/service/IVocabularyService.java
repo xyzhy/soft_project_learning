@@ -17,7 +17,7 @@ public interface IVocabularyService
      * @param vocabularyId 这是词, 和词汇做链接主键
      * @return 这是词, 和词汇做链接
      */
-    public Vocabulary selectVocabularyByVocabularyId(String vocabularyId);
+    Vocabulary selectVocabularyByVocabularyId(String vocabularyId);
 
     /**
      * 查询这是词, 和词汇做链接列表
@@ -25,7 +25,7 @@ public interface IVocabularyService
      * @param vocabulary 这是词, 和词汇做链接
      * @return 这是词, 和词汇做链接集合
      */
-    public List<Vocabulary> selectVocabularyList(Vocabulary vocabulary);
+    List<Vocabulary> selectVocabularyList(Vocabulary vocabulary);
 
     int insertBatchVocabulary(List<Vocabulary> vocabularies);
 
@@ -35,7 +35,7 @@ public interface IVocabularyService
      * @param vocabulary 这是词, 和词汇做链接
      * @return 结果
      */
-    public int insertVocabulary(Vocabulary vocabulary);
+    int insertVocabulary(Vocabulary vocabulary);
 
     /**
      * 修改这是词, 和词汇做链接
@@ -43,7 +43,7 @@ public interface IVocabularyService
      * @param vocabulary 这是词, 和词汇做链接
      * @return 结果
      */
-    public int updateVocabulary(Vocabulary vocabulary);
+    int updateVocabulary(Vocabulary vocabulary);
 
     /**
      * 批量删除这是词, 和词汇做链接
@@ -51,7 +51,7 @@ public interface IVocabularyService
      * @param vocabularyIds 需要删除的这是词, 和词汇做链接主键集合
      * @return 结果
      */
-    public int deleteVocabularyByVocabularyIds(String[] vocabularyIds);
+    int deleteVocabularyByVocabularyIds(String[] vocabularyIds);
 
     /**
      * 删除这是词, 和词汇做链接信息
@@ -59,5 +59,5 @@ public interface IVocabularyService
      * @param vocabularyId 这是词, 和词汇做链接主键
      * @return 结果
      */
-    public int deleteVocabularyByVocabularyId(String vocabularyId);
+    int deleteVocabularyByVocabularyId(String vocabularyId);
 }

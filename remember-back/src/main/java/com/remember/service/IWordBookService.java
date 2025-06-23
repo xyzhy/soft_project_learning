@@ -17,7 +17,7 @@ public interface IWordBookService
      * @param wordBookId 词汇书主键
      * @return 词汇书
      */
-    public WordBook selectWordBookByWordBookId(String wordBookId);
+    WordBook selectWordBookByWordBookId(String wordBookId);
 
     /**
      * 查询词汇书列表
@@ -25,7 +25,7 @@ public interface IWordBookService
      * @param wordBook 词汇书
      * @return 词汇书集合
      */
-    public List<WordBook> selectWordBookList(WordBook wordBook);
+    List<WordBook> selectWordBookList(WordBook wordBook);
 
     /**
      * 新增词汇书
@@ -33,7 +33,7 @@ public interface IWordBookService
      * @param wordBook 词汇书
      * @return 结果
      */
-    public int insertWordBook(WordBook wordBook);
+    int insertWordBook(WordBook wordBook);
 
     /**
      * 修改词汇书
@@ -41,7 +41,7 @@ public interface IWordBookService
      * @param wordBook 词汇书
      * @return 结果
      */
-    public int updateWordBook(WordBook wordBook);
+    int updateWordBook(WordBook wordBook);
 
     /**
      * 批量删除词汇书
@@ -49,7 +49,7 @@ public interface IWordBookService
      * @param wordBookIds 需要删除的词汇书主键集合
      * @return 结果
      */
-    public int deleteWordBookByWordBookIds(String[] wordBookIds);
+    int deleteWordBookByWordBookIds(String[] wordBookIds);
 
     /**
      * 删除词汇书信息
@@ -57,5 +57,5 @@ public interface IWordBookService
      * @param wordBookId 词汇书主键
      * @return 结果
      */
-    public int deleteWordBookByWordBookId(String wordBookId);
+    int deleteWordBookByWordBookId(String wordBookId);
 }
