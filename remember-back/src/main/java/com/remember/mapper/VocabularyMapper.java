@@ -12,6 +12,20 @@ import com.remember.domain.Vocabulary;
 public interface VocabularyMapper 
 {
     /**
+     * 批量插入词汇
+     * @param list 等待插入的词汇
+     * @return 操作成功的条数
+     */
+    public int insertBatchVocabulary(List<Vocabulary> list);
+
+    /**
+     * 批量修改词汇
+     * @param list 等待修改的词汇
+     * @return 操作成功的条数
+     */
+
+    public int updateBatchVocabulary(List<Vocabulary> list);
+    /**
      * 查询这是词, 和词汇做链接
      * 
      * @param vocabularyId 这是词, 和词汇做链接主键

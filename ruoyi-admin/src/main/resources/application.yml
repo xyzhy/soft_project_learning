@@ -36,6 +36,7 @@ logging:
   level:
     com.ruoyi: debug
     org.springframework: warn
+    com.remember.mapper: debug
 
 # 用户配置
 user:
@@ -127,3 +128,7 @@ xss:
   excludes: /system/notice
   # 匹配链接
   urlPatterns: /system/*,/monitor/*,/tool/*
+
+# python 路由
+uri:
+  python: http://127.0.0.1:5000

@@ -4,9 +4,9 @@ PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
 "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
 <mapper namespace="com.remember.mapper.VocabularyMapper">
     
-    <resultMap type="Vocabulary" id="VocabularyResult">
+    <resultMap type="com.remember.domain.Vocabulary" id="VocabularyResult">
         <result property="vocabularyId"    column="vocabulary_id"    />
-        <result property="word_book_id"    column="wordBookId"    />
+        <result property="wordBookId"    column="word_book_id"    />
         <result property="english"    column="english"    />
         <result property="means"    column="means"    />
         <result property="createDate"    column="create_date"    />
@@ -14,18 +14,18 @@ PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
     </resultMap>
 
     <sql id="selectVocabularyVo">
-        select v.vocabulary_id, btv.word_book_id, v.english, v.means, v.create_date, v.update_date
-        from book_to_vocabulary as btv left join vocabulary as v on btv.vocabulary_id = v.vocabulary_id
+        select v.vocabulary_id, v.word_book_id, v.english, v.means, v.create_date, v.update_date
+        from vocabulary as v
     </sql>
 
-    <select id="selectVocabularyList" parameterType="Vocabulary" resultMap="VocabularyResult">
+    <select id="selectVocabularyList" parameterType="com.remember.domain.Vocabulary" resultMap="VocabularyResult">
         <include refid="selectVocabularyVo"/>
         <where>
-            <if test="wordBookId != null  and wordBookId != ''"> and btv.word_book_id = #{wordBookId}</if>
+            <if test="wordBookId != null  and wordBookId != ''"> and v.word_book_id = #{wordBookId}</if>
             <if test="english != null  and english != ''"> and v.english like concat('%', #{english}, '%')</if>
             <if test="means != null  and means != ''"> and v.means like concat('%', #{means}, '%')</if>
-            <if test="params.beginCreateDate != null and params.beginCreateDate != '' and params.endCreateDate != null and params.endCreateDate != ''"> and create_date between #{params.beginCreateDate} and #{params.endCreateDate}</if>
-            <if test="params.beginUpdateDate != null and params.beginUpdateDate != '' and params.endUpdateDate != null and params.endUpdateDate != ''"> and update_date between #{params.beginUpdateDate} and #{params.endUpdateDate}</if>
+            <if test="params.beginCreateDate != null and params.beginCreateDate != '' and params.endCreateDate != null and params.endCreateDate != ''"> and v.create_date between #{params.beginCreateDate} and #{params.endCreateDate}</if>
+            <if test="params.beginUpdateDate != null and params.beginUpdateDate != '' and params.endUpdateDate != null and params.endUpdateDate != ''"> and v.update_date between #{params.beginUpdateDate} and #{params.endUpdateDate}</if>
         </where>
     </select>
     
@@ -34,11 +34,84 @@ PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
         where v.vocabulary_id = #{vocabularyId}
     </select>
 
-    <insert id="insertVocabulary" parameterType="Vocabulary">
+    <insert id="insertBatchVocabulary" parameterType="List">
+            insert into vocabulary
+            (vocabulary_id, english, word_book_id, means, create_date, update_date)
+            values
+        <foreach collection="list" item="item" separator=",">
+            (#{item.vocabularyId},
+            #{item.english},
+            #{item.wordBookId},
+            #{item.means},
+            #{item.createDate},
+            #{item.updateDate})
+        </foreach>
+    </insert>
+
+    <update id="updateBatchVocabulary" parameterType="java.util.List">
+        UPDATE vocabulary
+        <trim prefix="SET" suffixOverrides=",">
+            <!-- 每个字段一个CASE表达式 -->
+            <trim prefix="english = CASE" suffix="END,">
+                <foreach collection="list" item="item">
+                    WHEN vocabulary_id = #{item.vocabularyId}
+                    THEN
+                    <choose>
+                        <when test="item.english != null and item.english != ''">
+                            #{item.english}
+                        </when>
+                        <otherwise>
+                            english  <!-- 保留原值 -->
+                        </otherwise>
+                    </choose>
+                </foreach>
+            </trim>
+
+            <trim prefix="means = CASE" suffix="END,">
+                <foreach collection="list" item="item">
+                    WHEN vocabulary_id = #{item.vocabularyId}
+                    THEN
+                    <choose>
+                        <when test="item.means != null and item.means != ''">
+                            #{item.means}
+                        </when>
+                        <otherwise>
+                            means
+                        </otherwise>
+                    </choose>
+                </foreach>
+            </trim>
+
+            <!-- 其他字段同理... -->
+
+            <!-- 特殊处理update_date -->
+            <trim prefix="update_date = CASE" suffix="END,">
+                <foreach collection="list" item="item">
+                    WHEN vocabulary_id = #{item.vocabularyId}
+                    THEN
+                    <choose>
+                        <when test="item.updateDate != null">
+                            #{item.updateDate}
+                        </when>
+                        <otherwise>
+                            CURRENT_TIMESTAMP
+                        </otherwise>
+                    </choose>
+                </foreach>
+            </trim>
+        </trim>
+        WHERE vocabulary_id IN
+        <foreach collection="list" item="item" open="(" separator="," close=")">
+            #{item.vocabularyId}
+        </foreach>
+    </update>
+
+    <insert id="insertVocabulary" parameterType="com.remember.domain.Vocabulary">
         insert into vocabulary
         <trim prefix="(" suffix=")" suffixOverrides=",">
             <if test="vocabularyId != null">vocabulary_id,</if>
             <if test="english != null and english != ''">english,</if>
+            <if test="wordBookId != null and wordBookId != ''">word_book_id,</if>
             <if test="means != null and means != ''">means,</if>
             <if test="createDate != null">create_date,</if>
             <if test="updateDate != null">update_date,</if>
@@ -46,17 +119,19 @@ PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
         <trim prefix="values (" suffix=")" suffixOverrides=",">
             <if test="vocabularyId != null">#{vocabularyId},</if>
             <if test="english != null and english != ''">#{english},</if>
+            <if test="wordBookId != null and wordBookId != ''">#{wordBookId},</if>
             <if test="means != null and chinese != ''">#{means},</if>
             <if test="createDate != null">#{createDate},</if>
             <if test="updateDate != null">#{updateDate},</if>
          </trim>
     </insert>
 
-    <update id="updateVocabulary" parameterType="Vocabulary">
+    <update id="updateVocabulary" parameterType="com.remember.domain.Vocabulary">
         update vocabulary
         <trim prefix="SET" suffixOverrides=",">
             <if test="english != null and english != ''">english = #{english},</if>
             <if test="means != null and means != ''">means = #{means},</if>
+            <if test="wordBookId != null and wordBookId != ''">word_book_id = #{wordBookId},</if>
             <if test="createDate != null">create_date = #{createDate},</if>
             <if test="updateDate != null">update_date = #{updateDate},</if>
         </trim>

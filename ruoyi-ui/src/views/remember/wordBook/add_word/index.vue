@@ -88,6 +88,21 @@
           v-hasPermi="['remember:vocabulary:export']"
         >导出</el-button>
       </el-col>
+      <el-col :span="1.5">
+        <el-button plain class="button" @click="down_template">模板下载</el-button>
+      </el-col>
+      <el-col :span="1.5">
+        <el-upload
+          class="upload-demo"
+          action="#"
+          :auto-upload="false"
+          :multiple="false"
+          accept=".xlsx, .xls"
+          :on-change="handleProgress"
+          :show-file-list="false">
+          <el-button size="small" type="primary">点击上传</el-button>
+        </el-upload>
+      </el-col>
       <right-toolbar :showSearch.sync="showSearch" @queryTable="getList"></right-toolbar>
     </el-row>
 
@@ -135,7 +150,7 @@
 
     <!-- 添加或修改这是词, 和词汇做链接对话框 -->
     <el-dialog :title="title" :visible.sync="open" width="500px" append-to-body>
-      <el-form ref="form" :model="form" label-width="80px">
+      <el-form ref="form" :model="form" label-width="80px" :rules="rules">
         <el-form-item label="英文单词" prop="english">
           <el-input v-model="form.english" placeholder="请输入英文单词" />
         </el-form-item>
@@ -152,7 +167,7 @@
 </template>
 
 <script>
-import { listVocabulary, getVocabulary, delVocabulary, addVocabulary, updateVocabulary } from "@/api/remember/vocabulary"
+import { listVocabulary, getVocabulary, delVocabulary, addVocabulary, updateVocabulary, excelAdd } from "@/api/remember/vocabulary"
 
 export default {
   name: "Vocabulary",
@@ -192,6 +207,15 @@ export default {
       },
       // 表单参数
       form: {},
+      // 表单校验
+      rules: {
+        english: [
+          { required: true, message: '请输入英文单词', trigger: 'blur' },
+        ],
+        means: [
+          { required: true, message: '请输入中文意思', trigger: 'blur' },
+        ],
+      },
       /** 词汇书id */
       wordBookId: null
     }
@@ -202,6 +226,32 @@ export default {
     this.getList()
   },
   methods: {
+    /** 上传文件添加词汇 */
+    handleProgress(file) {
+      let formData = new FormData()
+      formData.append('file', file.raw)
+      formData.append('wordBookId', this.wordBookId)
+      
+      excelAdd(formData)
+      .then(res => {
+        this.$message({
+          message: res.msg,
+          type: "success"
+        })
+        this.getList()
+      })
+      .catch(err => {
+        this.$message({
+          message: res.msg,
+          type: "error"
+        })
+      })
+    },
+    /** 下载模板 */
+    down_template() {
+      this.download('/templates/excel/vocabWord', {
+      }, `词汇表模板.xlsx`)
+    },
     /** 查询这是词, 和词汇做链接列表 */
     getList() {
       this.loading = true
@@ -257,12 +307,9 @@ export default {
     },
     /** 新增按钮操作 */
     handleAdd() {
-      this.$router.push({
-        path: '/remember/word/add',
-        query: {
-          wordBookId: this.wordBookId
-        }
-      })
+      this.reset()
+      this.open = true
+      this.title = "添加单个词汇"
     },
     /** 修改按钮操作 */
     handleUpdate(row) {
@@ -271,7 +318,7 @@ export default {
       getVocabulary(vocabularyId).then(response => {
         this.form = response.data
         this.open = true
-        this.title = "修改这是词, 和词汇做链接"
+        this.title = "修改单个词汇"
       })
     },
     /** 提交按钮 */

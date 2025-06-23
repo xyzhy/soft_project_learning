@@ -1,8 +1,11 @@
 package com.remember.domain;
 
 import java.util.Date;
+import java.util.Objects;
+
 import com.fasterxml.jackson.annotation.JsonFormat;
 import com.ruoyi.common.annotation.GenerateId;
+import com.ruoyi.common.utils.StringUtils;
 import org.apache.commons.lang3.builder.ToStringBuilder;
 import org.apache.commons.lang3.builder.ToStringStyle;
 import com.ruoyi.common.annotation.Excel;
@@ -19,6 +22,7 @@ public class Vocabulary extends BaseEntity
     private static final long serialVersionUID = 1L;
 
     /** 词汇id */
+    @GenerateId
     private String vocabularyId;
 
     /** 这个词属于哪一个词汇书 */
@@ -110,5 +114,17 @@ public class Vocabulary extends BaseEntity
             .append("createDate", getCreateDate())
             .append("updateDate", getUpdateDate())
             .toString();
+    }
+
+    @Override
+    public boolean equals(Object o) {
+        if (o == null || getClass() != o.getClass()) return false;
+        Vocabulary that = (Vocabulary) o;
+        return StringUtils.equals(getEnglish(), that.getEnglish());
+    }
+
+    @Override
+    public int hashCode() {
+        return Objects.hashCode(english);
     }
 }

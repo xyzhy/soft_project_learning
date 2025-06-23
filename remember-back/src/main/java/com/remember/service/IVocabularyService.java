@@ -27,6 +27,8 @@ public interface IVocabularyService
      */
     public List<Vocabulary> selectVocabularyList(Vocabulary vocabulary);
 
+    int insertBatchVocabulary(List<Vocabulary> vocabularies);
+
     /**
      * 新增这是词, 和词汇做链接
      * 

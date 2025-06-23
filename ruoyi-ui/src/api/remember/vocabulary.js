@@ -1,5 +1,26 @@
 import request from '@/utils/request'
 
+/** 通过excel批量添加词汇 */
+export function excelAdd(data) {
+  return request({
+    url: '/remember/vocabulary/excel/addition',
+    method: 'post',
+    data: data,
+    headers: {
+      'Content-Type': 'multipart/form-data;'
+    }
+  })
+}
+
+/** 批量插入词汇 */
+export function batchAddVocab(data) {
+  return request({
+    url: '/remember/vocabulary/batchAdd',
+    method: 'post',
+    data: data
+  })
+}
+
 // 查询这是词, 和词汇做链接列表
 export function listVocabulary(query) {
   return request({

@@ -1,27 +1,8 @@
 <template>
     <div id="addWordPage">
         <div class="execution_panle">
-            <el-row type="flex" justify="end" :gutter="10">
-                <el-col :span="12">
-                    <span>上面输入英文, 下面输入中文 (词性1:词1,词2;词性2,词1,词2;)</span>
-                </el-col>
-                <el-col :span="3">
-                    <span>已有 {{ vocab_size }} 个词</span>
-                </el-col>
-                <el-col :span="3">
-                    <span>待提交 {{ addition_numeric }} 个词</span> <br>
-                    <span>当前处于 {{ recover_idx+1 }} 个词</span>
-                </el-col>
-                <el-col :span="3">
-                    <el-button plain class="button" @click="down_template">模板下载</el-button>
-                </el-col>
-                <el-col :span="3">
-                    <el-button plain type="primary" class="button">上传</el-button>
-                </el-col>
-                <el-col :span="3">
-                    <el-button plain type="success" class="button">提交</el-button>
-                </el-col>
-            </el-row> 
+            <el-button plain v-if="recover_idx != 0" @click="pre_word">上一个词</el-button>
+            <el-button v-if="recover_idx < addition_numeric" @click="next_word">下一个词</el-button>
         </div>
         <div class="input_panle">
             <div>
@@ -31,16 +12,6 @@
                 <div :class="{input: true, focus: isFocus == 1}" @click="confirm_focus(1)">
                     {{ input[1] }}
                 </div>
-            </div>
-        </div>
-        <div class="recover_panle">
-            <div>
-                <el-button plain v-if="recover_idx != 0" @click="pre_word">上一个词</el-button>
-                <el-button v-if="recover_idx < addition_numeric" @click="next_word">下一个词</el-button>
-            </div>
-            <div>
-                <el-button type="warning" v-if="recover_idx < addition_numeric" @click="current_word_by_end">以当前词为末尾</el-button>
-                <el-button type="primary" v-if="recover_idx < addition_numeric" @click="backend">回到末尾</el-button>
             </div>
         </div>
     </div>
@@ -57,28 +28,41 @@
                 addition_numeric: 0,
                 isFocus: 0,
                 input: ['', ''],
-                wait_sumbit: [{'english': '', 'means': ''}],
+                wait_sumbit: [{'english': '', 'means': '', wordBookId: ''}],
                 recover_idx: 0,
             }
         },
         mounted() {
             /** 添加核心逻辑 */
             document.addEventListener('keydown', this.middim)
-
-            this.wordBookId = this.$route.query.wordBookId
+            this.wait_sumbit[0].wordBookId = this.wordBookId = this.$route.query.wordBookId
         },
         deactivated() {
             /** 移除核心逻辑 */
             document.removeEventListener('keypress', this.middim)
         },
         methods: {
+            /** 提交词汇 */
+            submit_vocab() {
+                const sumbit_data = this.wait_sumbit.splice(0, this.addition_numeric)
+                this.addition_numeric = this.recover_idx = 0
+                batchAddVocab(sumbit_data)
+                .then(resq => {
+                    this.$message({
+                        message: resq.msg,
+                        type: 'success'
+                    })
+                })
+                .catch(err => {
+                    this.$message({
+                        message: `${err.msg}\n请联系管理员`,
+                        type: 'error'
+                    })
+                })
+            },
+            /** 核心逻辑中间函数 */
             middim(event) {
                 keyboard(event, this, this.press_enter, this.entertab)
-            },
-            /** 下载模板 */
-            down_template() {
-                this.download('/templates/excel/vocabWord', {
-                }, `词汇表模板.xlsx`)
             },
             /** 确定聚焦 */
             confirm_focus(idx) {
@@ -104,6 +88,7 @@
                 if (this.recover_idx == this.addition_numeric) {
 
                     this.wait_sumbit.push({
+                        'wordBookId': this.wordBookId,
                         'english': '',
                         'means': ''
                     })
@@ -129,17 +114,6 @@
                 this.input[0] = this.wait_sumbit[this.recover_idx].english
                 this.input[1] = this.wait_sumbit[this.recover_idx].means
             },
-            /** 以当前词作为末尾 */
-            current_word_by_end() {
-                this.wait_sumbit.splice(this.recover_idx, this.addition_numeric - this.recover_idx - 1)
-                this.addition_numeric = this.recover_idx+1
-                this.next_word()
-            },
-            /** 回到末尾 */
-            backend() {
-                this.recover_idx = this.addition_numeric-1
-                this.next_word()
-            }
         },
     }
 </script>
@@ -156,6 +130,8 @@
         width: 100%;
     }
     .execution_panle {
+        display: flex;
+        justify-content: space-between;
         position: relative;
         width: 100%;
         z-index: 1;
@@ -188,12 +164,5 @@
     }
     .focus {
         border-bottom-color: #16fd2a;
-    }
-    .recover_panle {
-        position: absolute;
-        bottom: 10px;
-        width: 100%;
-        display: flex;
-        justify-content: space-between;
     }
 </style>

@@ -1,17 +1,16 @@
 package com.remember.controller;
 
+import java.io.IOException;
 import java.util.List;
 import javax.servlet.http.HttpServletResponse;
+
+import com.alibaba.fastjson2.JSON;
+import com.alibaba.fastjson2.JSONObject;
+import com.alibaba.fastjson2.TypeReference;
+import com.ruoyi.common.utils.http.HttpRequestUtils;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.web.bind.annotation.GetMapping;
-import org.springframework.web.bind.annotation.PostMapping;
-import org.springframework.web.bind.annotation.PutMapping;
-import org.springframework.web.bind.annotation.DeleteMapping;
-import org.springframework.web.bind.annotation.PathVariable;
-import org.springframework.web.bind.annotation.RequestBody;
-import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.RestController;
+import org.springframework.web.bind.annotation.*;
 import com.ruoyi.common.annotation.Log;
 import com.ruoyi.common.core.controller.BaseController;
 import com.ruoyi.common.core.domain.AjaxResult;
@@ -20,6 +19,7 @@ import com.remember.domain.Vocabulary;
 import com.remember.service.IVocabularyService;
 import com.ruoyi.common.utils.poi.ExcelUtil;
 import com.ruoyi.common.core.page.TableDataInfo;
+import org.springframework.web.multipart.MultipartFile;
 
 /**
  * 这是词, 和词汇做链接Controller
@@ -33,6 +33,35 @@ public class VocabularyController extends BaseController
 {
     @Autowired
     private IVocabularyService vocabularyService;
+
+    /**
+     * 通过上传的 excel 表格来添加词汇
+     * @return
+     */
+    @PreAuthorize("@ss.hasPermi('remember:vocabulary:add')")
+    @PostMapping("/excel/addition")
+    public AjaxResult addBatchVocabByExcel(@RequestParam("file") MultipartFile file, @RequestParam("wordBookId") String wordBookId) throws IOException, InterruptedException {
+        JSONObject resp = JSON.parseObject(HttpRequestUtils.sendPostByBytes("/check/excel?wordBookId="+wordBookId, file.getBytes()));
+        if (resp.getIntValue("code") == 400) {
+            return error(resp.getString("msg"));
+        }
+
+        List<Vocabulary> vocabularies = resp.getObject("data", new TypeReference<List<Vocabulary>>() {});
+        return this.addBatchVocab(vocabularies);
+    }
+
+    /**
+     * 批量添加词汇
+     * @param vocabulary 词汇
+     * @return 成功提示
+     */
+    @PreAuthorize("@ss.hasPermi('remember:vocabulary:add')")
+    @PostMapping("/batchAdd")
+    public AjaxResult addBatchVocab(@RequestBody List<Vocabulary> vocabulary) {
+        int total_numeric = vocabulary.size();
+        int success_numeric = vocabularyService.insertBatchVocabulary(vocabulary);
+        return success(String.format("总共%s条数据, 操作成功%s条", total_numeric, success_numeric));
+    }
 
     /**
      * 查询这是词, 和词汇做链接列表
